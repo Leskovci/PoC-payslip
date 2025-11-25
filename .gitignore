@@ -1,0 +1,68 @@
+
+# Python virtual environments
+
+venv/
+.env
+*.env
+
+
+# Credentials & Secrets
+
+credentials.json
+*.key
+*.pem
+*secret*
+*token*
+*apikey*
+*connection*
+config.py        
+
+
+# Azure / Blob / Cloud
+
+azure_blob_io.py
+blob_test.py
+blob_*
+*_blob_*
+*.sh 
+
+
+# Sensitive or large local files
+
+data/
+inputfiles/
+outputfiles/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.tiff
+
+
+# Python cache
+
+__pycache__/
+*.pyc
+
+
+# Logs
+
+*.log
+
+
+# VS Code / IDE
+
+.vscode/
+.idea/
+
+
+# System files
+
+.DS_Store
+Thumbs.db
+
+
+# Build / temp
+
+dist/
+build/
