@@ -20,12 +20,6 @@ config.py
 
 # Azure / Blob / Cloud
 
-azure_blob_io.py
-blob_test.py
-blob_*
-*_blob_*
-*.sh 
-
 
 # Sensitive or large local files
 
