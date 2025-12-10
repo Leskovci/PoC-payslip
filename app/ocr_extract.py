@@ -6,8 +6,13 @@ from pdf2image import convert_from_bytes
 import fitz  # PyMuPDF
 import numpy as np
 
-# Path to Tesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# Detect environment: Windows vs Linux inside Docker
+if os.name == "nt":
+    # Windows path
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+else:
+    # Linux path (Docker)
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 
 def preprocess_image(img):

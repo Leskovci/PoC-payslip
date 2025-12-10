@@ -5,10 +5,11 @@ from datetime import datetime
 import re
 import yaml
 
+# Load from config.py (DO NOT override later!)
 from config import OLLAMA_URL, MODEL_NAME
 
 
-# Load prompt from YAML
+# Load extraction prompt from YAML
 def load_prompt():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(base_dir, "prompts", "prompt_config.yaml")
@@ -19,32 +20,27 @@ def load_prompt():
     return config["payslip_prompt"]
 
 
+# Normalize Swiss salary formats
 def normalize_salary(value):
     if not value or not isinstance(value, str):
         return ""
 
     value = value.strip()
 
-    # If it's already in a plausible Swiss/decimal format, just clean apostrophes and return
-    # Examples: 7'550.00, 7550.00, 4'703, 4700.00
     swiss_pattern = r"^\d{1,3}([\'’ ]\d{3})*(\.\d{2})?$"
     decimal_pattern = r"^\d+[\.,]\d{2}$"
 
     if re.match(swiss_pattern, value) or re.match(decimal_pattern, value):
-        # Normalize different apostrophe types and spaces between thousands
         cleaned = value.replace("’", "'").replace(" ", "")
         return cleaned
 
-    # If it's only digits and looks suspicious (e.g. '755000'), DO NOT reinterpret.
-    # Just return it as-is (or you could log a warning upstream).
     if re.fullmatch(r"\d+", value):
         return value
 
-    # Fallback: return original string unchanged
     return value
 
 
-# Query Ollama with deterministic settings
+# Query Ollama
 def query_ollama(prompt):
     try:
         payload = {
@@ -60,6 +56,8 @@ def query_ollama(prompt):
             }
         }
 
+        print(f"[LLM] Sending request to: {OLLAMA_URL}")
+
         response = requests.post(OLLAMA_URL, json=payload, timeout=300)
         response.raise_for_status()
 
@@ -67,11 +65,11 @@ def query_ollama(prompt):
         return data.get("response", "").strip()
 
     except Exception as e:
-        print(f"Ollama query failed: {e}")
+        print(f"[LLM ERROR] Ollama query failed: {e}")
         return ""
 
 
-# Main extraction function
+# Main extraction pipeline
 def parse_payslip_with_llm(text, filename):
     base_prompt = load_prompt()
 
@@ -84,16 +82,21 @@ Text to analyze:
 {text}
 """
 
-    print(f"Sending text to Ollama model: {MODEL_NAME}")
+    print(f"[LLM] Calling model: {MODEL_NAME}")
     result = query_ollama(final_prompt)
 
+    if not result:
+        print("[LLM] Empty response returned")
+        return {"raw_response": "", "PDF Name": filename}
+
+    # Parse JSON output
     try:
         parsed = json.loads(result)
         if isinstance(parsed, str):
             parsed = json.loads(parsed)
     except Exception as e:
-        print(f"Could not parse LLM JSON output: {e}")
-        parsed = {"raw_response": result}
+        print(f"[LLM ERROR] Could not parse returned JSON: {e}")
+        return {"raw_response": result}
 
     structured = {
         "Employer Name": parsed.get("Employer Name", ""),
