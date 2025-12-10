@@ -1,53 +1,97 @@
-# Run Guide
+Run Guide
 
-This document describes how to run the payslip extraction demo.
+This document describes how to run the payslip extraction demo using Docker.
 
+1. Start the complete system (LLM + App)
 
+From the project root (where docker-compose.yml is located), run:
 
-## 1. Activate the virtual environment
-venv\Scripts\activate
-
-
-
-## 2. Confirm Ollama is running
-
-You can test with:
-ollama run mistral
+docker compose build
+docker compose up -d
 
 
-If you see an interactive prompt, it works.
+This command:
+
+Starts Ollama (local LLM server)
+
+Starts the Streamlit application
+
+Sets up OCR, Azure Blob access, and internal networking
+
+Both services run together automatically.
+
+2. Confirm Ollama is running
+
+You can test by opening a shell inside the Ollama container:
+
+docker exec -it ollama_server bash
 
 
+Then run:
 
-## 3. Start the Streamlit application
-
-From the project root:
-streamlit run app/app.py
+ollama run mistral:7b-instruct-q4_K_M "Hello"
 
 
-Your browser will open automatically:
+If the model responds, the LLM is working.
+
+Type exit to leave the shell.
+
+3. Open the Streamlit application
+
+After the containers are running, open:
 
 http://localhost:8501
 
 
+This loads the user interface in your browser.
 
-## 4. How to use the interface
+4. How to use the interface
 
-1. Upload a payslip (PDF / JPG / PNG)
-2. OCR extracts raw text
-3. Local LLM converts extracted text to structured JSON
-4. JSON appears in the interface
-5. You may download the JSON file
+Upload a payslip (PDF / JPG / PNG), or select one from Azure Blob
+
+OCR extracts text inside the container
+
+The local LLM (via Ollama) converts the extracted text into structured JSON
+
+The JSON result is displayed in the interface
+
+You can download the JSON or CSV
+
+Results are also saved to Azure Blob Storage
+
+5. Azure Blob Storage integration
+
+Uploaded files are stored in:
+
+inputfiles/
 
 
+Extracted JSON outputs are stored in:
 
-## 5. Output storage
-
-By default, no files are auto-saved.  
-
-If desired, processed files can be stored manually in:
-
-data/payslips_output/
+outputfiles/
 
 
-This is the complete end-to-end flow for running the demonstration.
+You can manage these files using:
+
+Azure Portal
+
+Azure CLI
+
+The provided blob_test.py tool
+
+6. Stopping the system
+
+To stop all containers:
+
+docker compose down
+
+7. Updating the system after code changes
+
+After modifying the source code:
+
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+
+
+This rebuilds the Streamlit application container with your latest changes.
